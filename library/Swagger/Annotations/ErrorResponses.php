@@ -16,6 +16,9 @@ namespace Swagger\Annotations;
  */
 class ErrorResponses extends AbstractAnnotation
 {
-    protected $errorResponses = array();
+    /**
+     * @var array
+     */
+    public $value = array();
 }
 

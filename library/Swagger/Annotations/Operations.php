@@ -15,6 +15,9 @@ namespace Swagger\Annotations;
  */
 class Operations extends AbstractAnnotation
 {
-    protected $operations = array();
+    /**
+     * @var array
+     */
+    public $value = array();
 }
 

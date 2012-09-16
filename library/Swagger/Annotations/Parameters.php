@@ -15,6 +15,9 @@ namespace Swagger\Annotations;
  */
 class Parameters extends AbstractAnnotation
 {
-    protected $parameters = array();
+    /**
+     * @var array
+     */
+    public $value = array();
 }
 

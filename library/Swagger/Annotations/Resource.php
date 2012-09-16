@@ -20,23 +20,33 @@ class Resource extends AbstractAnnotation
     /**
      * @var string
      */
-    protected $apiVersion;
+    public $apiVersion;
 
     /**
      * @var string
      */
-    protected $swaggerVersion;
+    public $swaggerVersion;
 
     /**
      * "http://petstore.swagger.wordnik.com/api"
      *
      * @var string
      */
-    protected $basePath;
+    public $basePath;
 
     /**
      * @var "/store"
      */
-    protected $resourcePath;
+    public $resourcePath;
+
+    /**
+     * @var array
+     */
+    public $apis = array();
+
+    /**
+     * @var array
+     */
+    public $models = array();
 }
 

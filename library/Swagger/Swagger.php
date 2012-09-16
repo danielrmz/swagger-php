@@ -23,6 +23,8 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\IndexedReader;
 use Doctrine\Common\Annotations\Reader;
+use Swagger\Annotations\Model;
+use Swagger\Annotations\Resource;
 
 /**
  * @category   Swagger
@@ -35,13 +37,21 @@ class Swagger
      *
      * @var Array
      */
-    protected $fileList;
+    protected $fileList = array();
     /**
-     * @var null
+     * @var null|string
      */
     protected $excludePath;
-    protected $classlist = array();
-    public $result = array();
+
+    /**
+     * @var array
+     */
+    protected $classList = array();
+
+    /**
+     * @var array
+     */
+    public $registry = array();
     /**
      * @var Reader
      */
@@ -63,13 +73,23 @@ class Swagger
     /**
      * @return Swagger
      */
+    public function reset()
+    {
+        $this->reader      = null;
+        $this->excludePath = null;
+        $this->classList   = array();
+        $this->fileList    = array();
+        $this->registry    = array();
+        return $this;
+    }
+
+    /**
+     * @return Swagger
+     */
     protected function initializeAnnotations()
     {
         if (!$this->reader) {
-            AnnotationRegistry::registerAutoloadNamespace(
-                'Swagger\\',
-                dirname(__DIR__)
-            );
+            AnnotationRegistry::registerAutoloadNamespace(__NAMESPACE__, dirname(__DIR__));
             $this->reader = new IndexedReader(new AnnotationReader());
         }
         return $this;
@@ -77,36 +97,74 @@ class Swagger
 
     protected function discoverClassAnnotations()
     {
+        $this->registry = array();
         $this->initializeAnnotations();
-        $reader = new AnnotationReader();
         /* @var \ReflectionClass $class */
-        foreach ($this->classlist as $class) {
-            $result = array();
-            $methods = array();
-            $properties = null;
-            $result = array_merge($result, $reader->getClassAnnotations($class));
-            /* @var \ReflectionMethod $method */
-            foreach ($class->getMethods() as $method) {
-                $methods[$method->getName()] = $reader->getMethodAnnotations($method);
-            }
-            $result['methods'] = $methods;
-            /* @var \ReflectionProperty $property */
-            foreach ($class->getProperties() as $property) {
-                $properties[$property->getName()] = $reader->getPropertyAnnotations($property);
-            }
-            $result['properties'] = $properties;
-            $this->result[$class->getName()] = $result;
+        foreach ($this->classList as $class) {
+            $this->registry[] = $this->getClassAnnotations($class);
         }
-
     }
 
-    protected function discoverMethodAnnotations()
+    /**
+     * @param \ReflectionClass $class
+     *
+     * @return array
+     */
+    protected function getClassAnnotations(\ReflectionClass $class)
     {
-        
+        $models = array();
+        /* @var \Swagger\Annotations\Resource|Model $resource */
+        $resource = null;
+        foreach ($this->reader->getClassAnnotations($class) as $result) {
+            if ($result instanceof Model) {
+                /* @var Model $result */
+                /* @var \ReflectionProperty $property */
+                foreach ($class->getProperties() as $property) {
+                    $result->properties = array_merge(
+                        $result->properties,
+                        $this->discoverPropertyAnnotations($property)
+                    );
+                }
+                $models[$result->id] = $result->toArray();
+            } elseif ($result instanceof Resource) {
+                $resource = $result;
+                /* @var \ReflectionMethod $method */
+                foreach ($class->getMethods() as $method) {
+                    $resource->apis[] = $this->discoverMethodAnnotations($method);
+                }
+                $resource = $resource->toArray();
+            }
+        }
+        $resource['models'] = $models;
+        return $resource;
     }
-    protected function discoverPropertyAnnotations()
+
+    /**
+     * @param \ReflectionMethod $method
+     *
+     * @return array
+     */
+    protected function discoverMethodAnnotations(\ReflectionMethod $method)
     {
-        
+        $result = array();
+        foreach ($this->reader->getMethodAnnotations($method) as $method) {
+            array_push($result, $method->toArray());
+        }
+        return $result;
+    }
+
+    /**
+     * @param \ReflectionProperty $property
+     *
+     * @return array
+     */
+    protected function discoverPropertyAnnotations(\ReflectionProperty $property)
+    {
+        $result = array();
+        foreach ($this->reader->getPropertyAnnotations($property) as $property) {
+            array_push($result, $property->toArray());
+        }
+        return $result;
     }
 
     /**
@@ -260,7 +318,7 @@ class Swagger
                 include_once $filename;
             }
             foreach ($this->getClasses($filename) as $class) {
-                array_push($this->classlist, new \ReflectionClass($class));
+                array_push($this->classList, new \ReflectionClass($class));
             }
         }
         $this->discoverClassAnnotations();
@@ -335,6 +393,83 @@ class Swagger
     public function getReader()
     {
         return $this->reader;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRegistry()
+    {
+        return $this->registry;
+    }
+
+    /**
+     * @return null
+     */
+    public function getExcludePath()
+    {
+        return $this->excludePath;
+    }
+
+    /**
+     * @return array
+     */
+    public function getClassList()
+    {
+        return $this->classList;
+    }
+
+    /**
+     *
+     * @param array $classlist
+     *
+     * @return Swagger
+     */
+    public function setClassList($classlist)
+    {
+        $this->classList = $classlist;
+        return $this;
+    }
+
+    /**
+     *
+     * @param null $excludePath
+     * @return Swagger
+     */
+    public function setExcludePath($excludePath)
+    {
+        $this->excludePath = $excludePath;
+        return $this;
+    }
+
+    /**
+     *
+     * @param array $registry
+     * @return Swagger
+     */
+    public function setRegistry($registry)
+    {
+        $this->registry = $registry;
+        return $this;
+    }
+
+    /**
+     * @param $path
+     *
+     * @return Swagger
+     */
+    public function setPath($path)
+    {
+        $this->path = $path;
+        return $this;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getPath()
+    {
+        return $this->path;
     }
 }
 

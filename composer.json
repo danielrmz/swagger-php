@@ -19,9 +19,7 @@
         "bin-dir":"bin"
     },
     "require":{
-        "php":">=5.3.3"
-    },
-    "require-dev":{
+        "php":">=5.3.3",
         "symfony/finder":"*",
         "symfony/process":"*",
         "doctrine/common": "*",

@@ -18,25 +18,46 @@ class Parameter extends AbstractAnnotation
     /**
      * @var string
      */
-    protected $description;
+    public $description;
     /**
      * @var bool
      */
-    protected $require = false;
+    public $require = false;
     /**
      * @var bool
      */
-    protected $allowMultiple = true;
+    public $allowMultiple = true;
     /**
      * @var string
      */
-    protected $dataType;
+    public $dataType;
     /**
      * @var string
      */
-    protected $name;
+    public $name;
     /**
      * @var string
      */
-    protected $paramType;
+    public $paramType;
+
+    /**
+     * @var bool
+     */
+    public $required;
+
+    /**
+     * @var string
+     */
+    public $type;
+
+    /**
+     * @var mixed
+     */
+    public $value;
+
+    /**
+     * @var mixed
+     */
+    public $defaultValue;
 }
+
